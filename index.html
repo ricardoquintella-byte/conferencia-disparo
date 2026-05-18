@@ -226,24 +226,55 @@ tr:hover td{background:rgba(99,102,241,0.04);}
 
 <!-- LEADS -->
 <div class="page" id="page-leads">
+
+  <!-- IMPORTAR CSV -->
   <div class="card">
-    <div class="card-title"><span class="card-dot"></span>Adicionar lead</div>
-    <div class="lead-form">
+    <div class="card-title"><span class="card-dot"></span>📄 Importar CSV (Notion)</div>
+    <div class="flyer-zone" id="csvZone">
+      <input type="file" accept=".csv,text/csv" id="csvFileInput" onchange="loadCSV(this)">
+      <div id="csvZoneText">
+        <div style="font-size:26px;margin-bottom:6px">📥</div>
+        <div style="font-size:13px;font-weight:600;color:var(--muted2)">Clique ou arraste o CSV aqui</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">Exportado do Notion · colunas detectadas automaticamente</div>
+      </div>
+    </div>
+    <div id="csvMapSection" style="display:none;margin-top:16px">
+      <div id="csvPreviewCount"></div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px">
+        <button class="btn btn-primary" onclick="importCSV()">⬇ Confirmar e importar</button>
+        <button class="btn btn-ghost" onclick="cancelCSV()">✕ Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANUAL -->
+  <div class="card">
+    <div class="card-title"><span class="card-dot"></span>✏️ Adicionar manualmente</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:10px;align-items:end">
       <div class="field-group" style="margin:0"><label class="field-label">Nome completo</label><input type="text" id="newName" placeholder="Nome Sobrenome"></div>
       <div class="field-group" style="margin:0"><label class="field-label">WhatsApp (com DDI)</label><input type="text" id="newPhone" placeholder="5521999999999"></div>
+      <div class="field-group" style="margin:0"><label class="field-label">E-mail</label><input type="text" id="newEmail" placeholder="email@exemplo.com"></div>
       <div class="field-group" style="margin:0"><label class="field-label">Idade</label><input type="number" id="newAge" placeholder="30"></div>
       <button class="btn btn-primary" onclick="addLead()" style="margin-top:18px">+ Add</button>
     </div>
   </div>
+
   <div class="leads-toolbar">
     <span style="font-size:13px;color:var(--muted2);font-weight:600" id="leadCount">0 leads</span>
-    <input type="text" placeholder="Buscar..." oninput="filterLeadsPage(this.value)" style="max-width:180px">
-    <button class="btn btn-ghost" onclick="exportLeads()" style="margin-left:auto">↓ CSV</button>
-    <button class="btn btn-danger" onclick="clearAllLeads()">🗑 Limpar</button>
+    <input type="text" placeholder="Buscar..." oninput="filterLeadsPage(this.value)" style="max-width:160px">
+    <div style="display:flex;gap:4px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:3px">
+      <button class="pill active" onclick="sortLeads('az',this)" id="sortAZ" style="border:none;background:transparent">A→Z</button>
+      <button class="pill" onclick="sortLeads('za',this)" id="sortZA" style="border:none;background:transparent">Z→A</button>
+      <button class="pill" onclick="sortLeads('newest',this)" id="sortNew" style="border:none;background:transparent">+ Recente</button>
+      <button class="pill" onclick="sortLeads('oldest',this)" id="sortOld" style="border:none;background:transparent">+ Antigo</button>
+    </div>
+    <button class="btn btn-success" onclick="syncNotion()" id="btnNotion" style="margin-left:auto">🔄 Notion</button>
+    <button class="btn btn-ghost" onclick="exportLeads()">↓ CSV</button>
+    <button class="btn btn-danger" onclick="clearAllLeads()">🗑</button>
   </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>#</th><th>Nome</th><th>WhatsApp</th><th>Idade</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th></th><th>#</th><th>Nome</th><th>WhatsApp</th><th>E-mail</th><th>Cadastro</th><th>Status</th></tr></thead>
       <tbody id="leadsPageBody"></tbody>
     </table>
   </div>
@@ -455,24 +486,243 @@ function resetAll(){
 
 function exportLog(){const blob=new Blob([logs.join('\n')],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='log_disparo.txt';a.click();}
 
-function renderLeadsPage(){
-  const filtered=leads.filter(l=>!leadsSearchQuery||l.name.toLowerCase().includes(leadsSearchQuery));
-  document.getElementById('leadCount').textContent=`${leads.length} leads`;
-  document.getElementById('leadsPageBody').innerHTML=filtered.map(l=>`<tr><td class="td-num">${l.id+1}</td><td style="font-weight:500">${l.name}</td><td class="td-phone">${l.phone||'—'}</td><td style="color:var(--muted)">${l.age||'—'}</td><td>${getBadge(l.status,l.errorMsg)}</td><td><button class="btn btn-danger" style="padding:4px 10px;font-size:11px" onclick="removeLead(${l.id})">✕</button></td></tr>`).join('');
+// ═══ SORT ═══
+let leadsSort='az';
+function sortLeads(dir,btn){
+  leadsSort=dir;
+  document.querySelectorAll('#sortAZ,#sortZA,#sortNew,#sortOld').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  renderLeadsPage();
+}
+let csvRows=[], csvHeaders=[];
+
+function parseCSV(text){
+  if(text.charCodeAt(0)===0xFEFF)text=text.slice(1);
+  const result=[];
+  const lines=text.split(/\r?\n/);
+  let i=0;
+  while(i<lines.length){
+    let line=lines[i];
+    // Contar aspas — se número ímpar, linha continua na próxima
+    while((line.match(/"/g)||[]).length%2!==0&&i+1<lines.length){
+      i++;line+='\n'+lines[i];
+    }
+    if(line.trim()){
+      const cols=[];let cur='',inQ=false;
+      for(let j=0;j<line.length;j++){
+        const c=line[j];
+        if(c==='"'){
+          if(inQ&&line[j+1]==='"'){cur+='"';j++;}
+          else inQ=!inQ;
+        } else if(c===','&&!inQ){cols.push(cur.trim());cur='';}
+        else cur+=c;
+      }
+      cols.push(cur.trim());
+      result.push(cols);
+    }
+    i++;
+  }
+  return result;
 }
 
+function findCol(keywords){
+  for(let i=0;i<csvHeaders.length;i++){
+    const h=csvHeaders[i].toLowerCase().replace(/[^\w\s]/g,'').trim();
+    if(keywords.some(k=>h===k||h.includes(k)))return i;
+  }
+  return -1;
+}
+
+function loadCSV(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=(e)=>{
+    csvRows=parseCSV(e.target.result);
+    if(csvRows.length<2){showToast('CSV vazio ou inválido.','err');return;}
+    csvHeaders=csvRows[0];
+    // Busca exata pelas colunas necessárias
+    const ni=findCol(['nome completo','nome','name']);
+    const ei=findCol(['e-mail','email','e mail','mail']);
+    const pi=findCol(['whatsapp']);
+    if(ni<0||pi<0){showToast('Colunas Nome ou WhatsApp não encontradas.','err');return;}
+    document.getElementById('csvMapSection').dataset.ni=ni;
+    document.getElementById('csvMapSection').dataset.pi=pi;
+    document.getElementById('csvMapSection').dataset.ei=ei>=0?ei:-1;
+    // Prévia das 3 primeiras linhas — só Nome, WhatsApp, Email
+    const prev=csvRows.slice(1,4).map(r=>{
+      const n=(r[ni]||'—').substring(0,30);
+      const p=(r[pi]||'—').substring(0,20);
+      const em=ei>=0?(r[ei]||'—').substring(0,30):'—';
+      return `<tr><td style="padding:3px 8px;color:var(--text)">${n}</td><td style="padding:3px 8px;color:var(--muted);font-family:monospace;font-size:11px">${p}</td><td style="padding:3px 8px;color:var(--muted);font-size:11px">${em}</td></tr>`;
+    }).join('');
+    document.getElementById('csvPreviewCount').innerHTML=`
+      <div style="font-size:11px;color:var(--muted2);margin-bottom:8px">
+        Colunas: <b style="color:var(--accent)">${csvHeaders[ni]}</b> · <b style="color:var(--accent)">${csvHeaders[pi]}</b> · <b style="color:var(--accent)">${ei>=0?csvHeaders[ei]:'—'}</b>
+      </div>
+      <table style="font-size:12px;border-collapse:collapse;width:100%"><tbody>${prev}</tbody></table>
+      <div style="margin-top:10px;color:var(--green);font-weight:600;font-size:13px">✓ ${csvRows.length-1} registros prontos · apenas Nome, WhatsApp e E-mail serão importados</div>`;
+    document.getElementById('csvMapSection').style.display='block';
+    document.getElementById('csvZoneText').innerHTML=`<div style="font-size:22px;margin-bottom:4px">✅</div><div style="font-size:13px;font-weight:600;color:var(--green)">${file.name}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${csvRows.length-1} registros encontrados</div>`;
+    document.getElementById('csvZone').classList.add('loaded');
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+function importCSV(){
+  const sec=document.getElementById('csvMapSection');
+  const ni=parseInt(sec.dataset.ni);
+  const pi=parseInt(sec.dataset.pi);
+  const ei=parseInt(sec.dataset.ei);
+
+  // Primeiro: agrupar por nome, mesclando whatsapp e email
+  const merged={};
+  for(let i=1;i<csvRows.length;i++){
+    const row=csvRows[i];
+    const name=(row[ni]||'').trim();
+    const rawPhone=(row[pi]||'').trim();
+    const email=ei>=0?(row[ei]||'').trim():'';
+    if(!name)continue;
+    const key=name.toLowerCase();
+    if(!merged[key]){merged[key]={name,rawPhone:'',email:'',createdAt:new Date().toISOString()};}
+    if(rawPhone&&!merged[key].rawPhone)merged[key].rawPhone=rawPhone;
+    if(email&&!merged[key].email)merged[key].email=email;
+  }
+
+  let added=0,dupes=0;
+  const existingPhones=new Set(leads.map(l=>l.phone).filter(Boolean));
+  const existingNames=new Set(leads.map(l=>l.name.toLowerCase()));
+
+  Object.values(merged).forEach(m=>{
+    const phone=cleanPhone(m.rawPhone);
+    if(existingNames.has(m.name.toLowerCase())){
+      // Atualizar campos vazios de lead existente
+      const existing=leads.find(l=>l.name.toLowerCase()===m.name.toLowerCase());
+      if(existing){
+        if(!existing.phone&&phone){existing.phone=phone;existing.rawPhone=m.rawPhone;existing.status='pending';existing.errorMsg='';}
+        if(!existing.email&&m.email)existing.email=m.email;
+      }
+      dupes++;return;
+    }
+    if(phone&&existingPhones.has(phone)){dupes++;return;}
+    const newId=leads.length>0?Math.max(...leads.map(l=>l.id))+1:0;
+    leads.push({id:newId,name:m.name,phone,rawPhone:m.rawPhone,email:m.email,age:'',createdAt:m.createdAt,status:phone?'pending':'error',errorMsg:phone?'':'Sem telefone'});
+    if(phone)existingPhones.add(phone);
+    existingNames.add(m.name.toLowerCase());
+    added++;
+  });
+
+  saveLeads();renderLeadsPage();renderTable();updateStats();
+  cancelCSV();
+  showToast(`✓ ${added} importados · ${dupes} já existiam`,'ok');
+  addLog(`CSV: ${added} importados, ${dupes} já existiam`,'ok');
+}
+
+function cancelCSV(){
+  csvRows=[];csvHeaders=[];
+  document.getElementById('csvMapSection').style.display='none';
+  document.getElementById('csvPreviewCount').innerHTML='';
+  document.getElementById('csvZone').classList.remove('loaded');
+  document.getElementById('csvZoneText').innerHTML=`<div style="font-size:26px;margin-bottom:6px">📥</div><div style="font-size:13px;font-weight:600;color:var(--muted2)">Clique ou arraste o CSV aqui</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Exportado do Notion · apenas Nome, WhatsApp e E-mail importados</div>`;
+  document.getElementById('csvFileInput').value='';
+}
+
+// ═══ NOTION SYNC ═══
+async function syncNotion(){
+  const btn=document.getElementById('btnNotion');
+  btn.disabled=true;
+  btn.textContent='⏳ Sincronizando...';
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4000,
+        system: "Você é um assistente que busca dados do Notion. Responda APENAS com JSON válido, sem texto adicional, sem markdown. Formato: [{\"nome\":\"...\",\"whatsapp\":\"...\",\"email\":\"...\"}]",
+        messages: [{
+          role: "user",
+          content: "Busque TODOS os registros do database 'Formulário de cadastro - Discipulados' (ID: 26cd86cc-d634-8130-b347-ddf4fa399dbd) no Notion. Retorne APENAS um array JSON com os campos: nome (Nome Completo), whatsapp (WhatsApp), email (E-mail). Ignore todos os outros campos. Se whatsapp ou email estiverem vazios, use string vazia."
+        }],
+        mcp_servers: [{
+          type: "url",
+          url: "https://mcp.notion.com/mcp",
+          name: "notion-mcp"
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    const clean = text.replace(/```json|```/g,'').trim();
+    const notionLeads = JSON.parse(clean);
+
+    let added=0, dupes=0;
+    const existingPhones = new Set(leads.map(l=>l.phone).filter(Boolean));
+    const existingNames = new Set(leads.map(l=>l.name.toLowerCase()));
+
+    notionLeads.forEach(nl => {
+      const name = (nl.nome||'').trim();
+      const rawPhone = (nl.whatsapp||'').trim();
+      const email = (nl.email||'').trim();
+      if(!name) return;
+      const phone = cleanPhone(rawPhone);
+      if(phone && existingPhones.has(phone)){dupes++;return;}
+      if(!phone && existingNames.has(name.toLowerCase())){dupes++;return;}
+      const newId = leads.length>0 ? Math.max(...leads.map(l=>l.id))+1 : 0;
+      leads.push({id:newId, name, phone, rawPhone, email, age:'', status:phone?'pending':'error', errorMsg:phone?'':'Sem telefone'});
+      if(phone) existingPhones.add(phone);
+      existingNames.add(name.toLowerCase());
+      added++;
+    });
+
+    saveLeads(); renderLeadsPage(); renderTable(); updateStats();
+    showToast(`✓ ${added} novos · ${dupes} já existiam`, 'ok');
+    addLog(`Notion sync: ${added} adicionados, ${dupes} duplicatas`, 'ok');
+  } catch(e) {
+    showToast(`Erro na sincronização: ${e.message}`, 'err');
+    addLog(`Erro Notion sync: ${e.message}`, 'err');
+  }
+  btn.disabled=false;
+  btn.textContent='🔄 Sincronizar Notion';
+}
 function filterLeadsPage(q){leadsSearchQuery=q.toLowerCase();renderLeadsPage();}
+
+function renderLeadsPage(){
+  let filtered=leads.filter(l=>!leadsSearchQuery||l.name.toLowerCase().includes(leadsSearchQuery));
+  filtered=[...filtered].sort((a,b)=>{
+    if(leadsSort==='az')return a.name.localeCompare(b.name,'pt');
+    if(leadsSort==='za')return b.name.localeCompare(a.name,'pt');
+    if(leadsSort==='newest')return new Date(b.createdAt||0)-new Date(a.createdAt||0);
+    if(leadsSort==='oldest')return new Date(a.createdAt||0)-new Date(b.createdAt||0);
+    return 0;
+  });
+  document.getElementById('leadCount').textContent=`${leads.length} leads`;
+  document.getElementById('leadsPageBody').innerHTML=filtered.map(l=>{
+    const dt=l.createdAt?new Date(l.createdAt).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'}):'—';
+    return `<tr>
+      <td><button class="btn btn-danger rm-btn" data-lid="${l.id}" style="padding:3px 8px;font-size:11px;min-width:32px">✕</button></td>
+      <td class="td-num">${l.id+1}</td>
+      <td style="font-weight:500">${l.name}</td>
+      <td class="td-phone">${l.phone||'—'}</td>
+      <td style="font-size:12px;color:var(--muted)">${l.email||'—'}</td>
+      <td style="font-size:11px;color:var(--muted);font-family:monospace">${dt}</td>
+      <td>${getBadge(l.status,l.errorMsg)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('leadsPageBody').querySelectorAll('.rm-btn').forEach(b=>b.addEventListener('click',()=>removeLead(parseInt(b.getAttribute('data-lid')))));
+}
 
 function addLead(){
   const name=document.getElementById('newName').value.trim();
   const phone=document.getElementById('newPhone').value.trim();
+  const email=document.getElementById('newEmail').value.trim();
   const age=document.getElementById('newAge').value.trim();
   if(!name){showToast('Digite o nome.','err');return;}
   const cleaned=cleanPhone(phone);
   const newId=leads.length>0?Math.max(...leads.map(l=>l.id))+1:0;
-  leads.push({id:newId,name,phone:cleaned,rawPhone:phone,age,status:cleaned?'pending':'error',errorMsg:cleaned?'':'Sem telefone'});
+  leads.push({id:newId,name,phone:cleaned,rawPhone:phone,email,age,createdAt:new Date().toISOString(),status:cleaned?'pending':'error',errorMsg:cleaned?'':'Sem telefone'});
   saveLeads();renderLeadsPage();renderTable();updateStats();
-  document.getElementById('newName').value='';document.getElementById('newPhone').value='';document.getElementById('newAge').value='';
+  document.getElementById('newName').value='';document.getElementById('newPhone').value='';document.getElementById('newEmail').value='';document.getElementById('newAge').value='';
   showToast(`${name} adicionado!`,'ok');
 }
 
@@ -484,8 +734,8 @@ function clearAllLeads(){
 }
 
 function exportLeads(){
-  const rows=['Nome,WhatsApp,Idade,Status'];
-  leads.forEach(l=>rows.push(`"${l.name}","${l.phone||''}","${l.age||''}","${l.status}"`));
+  const rows=['Nome,WhatsApp,Email,Idade,Status'];
+  leads.forEach(l=>rows.push(`"${l.name}","${l.phone||''}","${l.email||''}","${l.age||''}","${l.status}"`));
   const blob=new Blob([rows.join('\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='leads.csv';a.click();
 }
 
