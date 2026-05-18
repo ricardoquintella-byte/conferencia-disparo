@@ -2,959 +2,504 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Disparo — Conferência do Ensino 2026</title>
-<meta name="description" content="Disparo de convites WhatsApp — Igreja Recomeçar">
-<meta name="theme-color" content="#e8132a">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title id="pageTitle">Disparo WhatsApp</title>
+<meta name="description" content="Disparo de mensagens WhatsApp via Z-API">
+<meta name="theme-color" content="#6366f1">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Disparo IR">
+<meta name="apple-mobile-web-app-title" content="Disparo WA">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/ricardoquintella-byte/conferencia-disparo/main/Imagem%20do%20WhatsApp%202026-05-17%20%C3%A0s%2019.35.11.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
+:root {
+  --bg:#080b14;--surface:#0f1524;--surface2:#161d30;
+  --border:rgba(99,102,241,0.15);--border2:rgba(255,255,255,0.06);
+  --primary:#6366f1;--primary-glow:rgba(99,102,241,0.3);
+  --accent:#22d3ee;--accent2:#a78bfa;
+  --text:#e2e8f0;--muted:#64748b;--muted2:#94a3b8;
+  --green:#10b981;--green-glow:rgba(16,185,129,0.2);
+  --yellow:#f59e0b;--red:#ef4444;--red-glow:rgba(239,68,68,0.2);
+  --radius:16px;--radius-sm:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;top:-200px;left:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(99,102,241,0.08) 0%,transparent 70%);pointer-events:none;z-index:0;}
+body::after{content:'';position:fixed;bottom:-200px;right:-200px;width:500px;height:500px;background:radial-gradient(circle,rgba(34,211,238,0.06) 0%,transparent 70%);pointer-events:none;z-index:0;}
 
-  :root {
-    --red: #e8132a;
-    --dark: #0a0f1e;
-    --navy: #0d1630;
-    --card: #111827;
-    --border: #1f2d4a;
-    --text: #e2e8f0;
-    --muted: #64748b;
-    --green: #22c55e;
-    --yellow: #f59e0b;
-  }
+nav{position:sticky;top:0;z-index:100;background:rgba(8,11,20,0.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border2);padding:0 20px;display:flex;align-items:center;height:60px;gap:4px;}
+.nav-logo{font-size:16px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;flex:1;cursor:pointer;}
+.nav-tab{padding:7px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all .2s;font-family:'Outfit',sans-serif;white-space:nowrap;}
+.nav-tab:hover{color:var(--text);background:var(--border2);}
+.nav-tab.active{color:var(--primary);background:rgba(99,102,241,0.1);}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+.page{display:none;padding:24px 20px;max-width:1100px;margin:0 auto;position:relative;z-index:1;}
+.page.active{display:block;}
 
-  body {
-    background: var(--dark);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    min-height: 100vh;
-  }
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.stat-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:18px 20px;position:relative;overflow:hidden;transition:transform .2s;}
+.stat-card:hover{transform:translateY(-2px);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0;}
+.stat-card.total::before{background:linear-gradient(90deg,var(--primary),var(--accent2));}
+.stat-card.sent::before{background:linear-gradient(90deg,var(--green),#34d399);}
+.stat-card.pending::before{background:linear-gradient(90deg,var(--yellow),#fbbf24);}
+.stat-card.error::before{background:linear-gradient(90deg,var(--red),#f87171);}
+.stat-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-weight:700;margin-bottom:8px;}
+.stat-num{font-size:38px;font-weight:800;line-height:1;letter-spacing:-1px;}
+.stat-card.total .stat-num{color:#fff;}.stat-card.sent .stat-num{color:var(--green);}
+.stat-card.pending .stat-num{color:var(--yellow);}.stat-card.error .stat-num{color:var(--red);}
 
-  header {
-    background: linear-gradient(135deg, var(--navy) 0%, #0a0f1e 100%);
-    border-bottom: 1px solid var(--border);
-    padding: 20px 32px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
+.progress-wrap{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px;}
+.progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.progress-title{font-size:12px;font-weight:600;color:var(--muted2);}
+.progress-pct{font-size:18px;font-weight:800;color:var(--primary);font-family:'JetBrains Mono',monospace;}
+.progress-track{background:var(--surface2);border-radius:99px;height:7px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1);width:0%;box-shadow:0 0 12px var(--primary-glow);}
 
-  .header-accent {
-    width: 4px;
-    height: 48px;
-    background: var(--red);
-    border-radius: 2px;
-  }
+.card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:20px;margin-bottom:18px;}
+.card-title{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.card-dot{width:6px;height:6px;border-radius:50%;background:var(--primary);box-shadow:0 0 8px var(--primary-glow);}
 
-  header h1 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 28px;
-    letter-spacing: 2px;
-    color: #fff;
-    line-height: 1;
-  }
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:var(--radius-sm);font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),#4f46e5);color:#fff;box-shadow:0 4px 20px var(--primary-glow);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 28px var(--primary-glow);}
+.btn-primary:disabled{background:#1e2233;color:var(--muted);box-shadow:none;cursor:not-allowed;transform:none;}
+.btn-ghost{background:var(--surface2);border:1px solid var(--border2);color:var(--muted2);}
+.btn-ghost:hover{border-color:var(--primary);color:var(--primary);}
+.btn-ghost:disabled{opacity:.4;cursor:not-allowed;}
+.btn-success{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);color:var(--green);}
+.btn-success:hover{background:rgba(16,185,129,0.18);}
+.btn-danger{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:var(--red);}
+.btn-danger:hover{background:rgba(239,68,68,0.18);}
 
-  header p {
-    font-size: 12px;
-    color: var(--muted);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-top: 2px;
-  }
+.controls{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center;}
+.delay-wrap{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);font-weight:500;}
+.delay-wrap input{width:60px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:7px 10px;border-radius:8px;font-size:13px;text-align:center;font-family:'JetBrains Mono',monospace;}
 
-  .badge {
-    margin-left: auto;
-    background: rgba(232,19,42,0.15);
-    border: 1px solid rgba(232,19,42,0.3);
-    color: var(--red);
-    font-size: 11px;
-    font-weight: 600;
-    padding: 4px 12px;
-    border-radius: 20px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
+input[type="text"],input[type="number"],textarea,select{background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:10px 13px;border-radius:var(--radius-sm);font-family:'Outfit',sans-serif;font-size:13px;transition:border-color .2s,box-shadow .2s;width:100%;}
+input:focus,textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow);}
+textarea{resize:vertical;min-height:140px;line-height:1.7;}
 
-  main { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+.msg-preview{background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);border-radius:var(--radius-sm);padding:14px;font-size:12px;line-height:1.8;color:#a7f3d0;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow-y:auto;font-family:'JetBrains Mono',monospace;}
 
-  /* STATS */
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 32px;
-  }
+.test-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.test-row input{max-width:220px;}
 
-  .stat-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-    text-align: center;
-  }
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;}
+.badge-pending{background:rgba(245,158,11,0.1);color:var(--yellow);border:1px solid rgba(245,158,11,0.2);}
+.badge-sent{background:rgba(16,185,129,0.1);color:var(--green);border:1px solid rgba(16,185,129,0.2);}
+.badge-error{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.2);}
+.badge-sending{background:rgba(99,102,241,0.1);color:var(--primary);border:1px solid rgba(99,102,241,0.2);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.badge-dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
 
-  .stat-card .num {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 40px;
-    letter-spacing: 1px;
-    line-height: 1;
-  }
+.table-wrap{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden;}
+.table-toolbar{padding:14px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border2);flex-wrap:wrap;}
+.filter-pills{display:flex;gap:6px;}
+.pill{padding:5px 13px;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--muted);transition:all .2s;font-family:'Outfit',sans-serif;}
+.pill:hover{color:var(--text);border-color:var(--primary);}
+.pill.active{background:rgba(99,102,241,0.15);border-color:var(--primary);color:var(--primary);}
+.search-input{margin-left:auto;width:180px!important;padding:7px 12px!important;font-size:12px!important;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);padding:11px 14px;text-align:left;background:var(--surface2);border-bottom:1px solid var(--border2);font-weight:700;}
+td{padding:11px 14px;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.03);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(99,102,241,0.04);}
+.td-num{color:var(--muted);font-size:11px;font-family:'JetBrains Mono',monospace;}
+.td-phone{color:var(--muted);font-size:12px;font-family:'JetBrains Mono',monospace;}
 
-  .stat-card .label {
-    font-size: 11px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 6px;
-  }
+.log-box{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:12px 14px;max-height:140px;overflow-y:auto;margin-top:18px;}
+.log-line{font-size:11px;padding:2px 0;font-family:'JetBrains Mono',monospace;color:var(--muted);}
+.log-line.ok{color:var(--green);}.log-line.err{color:var(--red);}.log-line.info{color:var(--accent);}
 
-  .stat-card.total .num { color: #fff; }
-  .stat-card.sent .num { color: var(--green); }
-  .stat-card.pending .num { color: var(--yellow); }
-  .stat-card.error .num { color: var(--red); }
+.spinner{width:11px;height:11px;border:2px solid rgba(255,255,255,0.2);border-top-color:currentColor;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-  /* PROGRESS */
-  .progress-bar {
-    background: var(--border);
-    border-radius: 4px;
-    height: 6px;
-    margin-bottom: 32px;
-    overflow: hidden;
-  }
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.field-group{margin-bottom:14px;}
+.field-label{font-size:12px;font-weight:600;color:var(--muted2);margin-bottom:5px;display:block;}
+.field-hint{font-size:11px;color:var(--muted);margin-top:4px;}
 
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--red), #ff4757);
-    border-radius: 4px;
-    transition: width 0.5s ease;
-    width: 0%;
-  }
+.lead-form{display:grid;grid-template-columns:1fr 1fr 80px auto;gap:10px;align-items:end;margin-bottom:18px;}
+.leads-toolbar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center;}
 
-  /* CONTROLS */
-  .controls {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 32px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
+.flyer-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
+.flyer-zone:hover{border-color:var(--primary);background:rgba(99,102,241,0.04);}
+.flyer-zone.loaded{border-color:var(--green);background:rgba(16,185,129,0.04);}
+.flyer-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.flyer-preview{max-height:100px;border-radius:8px;margin-top:10px;}
 
-  .delay-label {
-    font-size: 12px;
-    color: var(--muted);
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+.toast{position:fixed;bottom:20px;right:20px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:12px 18px;font-size:13px;font-weight:500;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,0.4);transform:translateY(100px);opacity:0;transition:all .3s cubic-bezier(.4,0,.2,1);max-width:300px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.ok{border-color:rgba(16,185,129,0.3);color:var(--green);}
+.toast.err{border-color:rgba(239,68,68,0.3);color:var(--red);}
 
-  .delay-label input {
-    background: var(--card);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-size: 12px;
-    width: 70px;
-    text-align: center;
-  }
-
-  btn, .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
-    text-decoration: none;
-  }
-
-  .btn-primary {
-    background: var(--red);
-    color: #fff;
-  }
-  .btn-primary:hover { background: #c8102a; transform: translateY(-1px); }
-  .btn-primary:disabled { background: #4a1520; color: #7a3040; cursor: not-allowed; transform: none; }
-
-  .btn-outline {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text);
-  }
-  .btn-outline:hover { border-color: var(--red); color: var(--red); }
-  .btn-outline:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  .btn-green {
-    background: rgba(34,197,94,0.1);
-    border: 1px solid rgba(34,197,94,0.3);
-    color: var(--green);
-  }
-  .btn-green:hover { background: rgba(34,197,94,0.2); }
-
-  /* MESSAGE PREVIEW */
-  .message-section {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 24px;
-  }
-
-  .section-title {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--muted);
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .section-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-
-  .message-preview {
-    background: #0d1b0f;
-    border: 1px solid rgba(34,197,94,0.2);
-    border-radius: 10px;
-    padding: 16px;
-    font-size: 13px;
-    line-height: 1.7;
-    color: #d1fae5;
-    white-space: pre-wrap;
-    word-break: break-word;
-    max-height: 180px;
-    overflow-y: auto;
-  }
-
-  /* TABLE */
-  .table-section {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-
-  .table-header {
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .search-input {
-    background: var(--dark);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 8px 14px;
-    border-radius: 6px;
-    font-size: 13px;
-    width: 220px;
-  }
-
-  .search-input:focus { outline: none; border-color: var(--red); }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  th {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--muted);
-    padding: 12px 16px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-    background: rgba(0,0,0,0.2);
-    font-weight: 600;
-  }
-
-  td {
-    padding: 12px 16px;
-    font-size: 13px;
-    border-bottom: 1px solid rgba(31,45,74,0.5);
-  }
-
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: rgba(255,255,255,0.02); }
-
-  .status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-  }
-
-  .status-pending { background: rgba(245,158,11,0.1); color: var(--yellow); border: 1px solid rgba(245,158,11,0.2); }
-  .status-sent { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
-  .status-error { background: rgba(232,19,42,0.1); color: var(--red); border: 1px solid rgba(232,19,42,0.2); }
-  .status-sending { background: rgba(99,102,241,0.1); color: #818cf8; border: 1px solid rgba(99,102,241,0.2); }
-
-  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-
-  /* LOG */
-  .log-section {
-    margin-top: 24px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px 20px;
-    max-height: 180px;
-    overflow-y: auto;
-  }
-
-  .log-line {
-    font-size: 12px;
-    color: var(--muted);
-    padding: 3px 0;
-    font-family: 'Courier New', monospace;
-    border-bottom: 1px solid rgba(31,45,74,0.3);
-  }
-
-  .log-line.ok { color: var(--green); }
-  .log-line.err { color: var(--red); }
-  .log-line.info { color: #60a5fa; }
-
-  .spinner {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    border: 2px solid rgba(255,255,255,0.2);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    vertical-align: middle;
-    margin-right: 6px;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .phone-col { color: var(--muted); font-size: 12px; font-family: monospace; }
-
-  .filter-tabs {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 0;
-  }
-
-  .filter-tab {
-    padding: 6px 14px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--muted);
-    transition: all 0.2s;
-  }
-
-  .filter-tab.active { background: rgba(232,19,42,0.15); border-color: var(--red); color: var(--red); }
-  .filter-tab:hover:not(.active) { border-color: #334155; color: var(--text); }
-
-  @media (max-width: 768px) {
-    .stats { grid-template-columns: repeat(2, 1fr); }
-    .controls { flex-direction: column; align-items: stretch; }
-    .delay-label { margin-left: 0; }
-    header { padding: 16px; }
-    header h1 { font-size: 22px; }
-  }
+@media(max-width:768px){
+  .stats-grid{grid-template-columns:repeat(2,1fr);}
+  .settings-grid{grid-template-columns:1fr;}
+  .lead-form{grid-template-columns:1fr 1fr;}
+  .controls{flex-direction:column;align-items:stretch;}
+  .delay-wrap{margin-left:0;}
+  .test-row input{max-width:100%;}
+  .search-input{width:100%!important;margin-left:0;}
+  .nav-tab{padding:6px 10px;font-size:12px;}
+}
 </style>
 </head>
 <body>
+<div class="toast" id="toast"></div>
 
-<header>
-  <div class="header-accent"></div>
-  <div>
-    <h1>Conferência do Ensino 2026</h1>
-    <p>Disparo de Convites — WhatsApp via Z-API</p>
-  </div>
-  <span class="badge">Igreja Recomeçar</span>
-</header>
+<nav>
+  <div class="nav-logo" id="navTitle" onclick="showPage('disparo')">Disparo WA</div>
+  <button class="nav-tab active" onclick="showPage('disparo',this)">📤 Disparo</button>
+  <button class="nav-tab" onclick="showPage('leads',this)">👥 Leads</button>
+  <button class="nav-tab" onclick="showPage('mensagem',this)">✉️ Mensagem</button>
+  <button class="nav-tab" onclick="showPage('config',this)">⚙️ Config</button>
+</nav>
 
-<main>
-
-  <div class="stats">
-    <div class="stat-card total">
-      <div class="num" id="statTotal">0</div>
-      <div class="label">Total de Leads</div>
-    </div>
-    <div class="stat-card sent">
-      <div class="num" id="statSent">0</div>
-      <div class="label">Enviados</div>
-    </div>
-    <div class="stat-card pending">
-      <div class="num" id="statPending">0</div>
-      <div class="label">Pendentes</div>
-    </div>
-    <div class="stat-card error">
-      <div class="num" id="statError">0</div>
-      <div class="label">Erros</div>
-    </div>
+<!-- DISPARO -->
+<div class="page active" id="page-disparo">
+  <div class="stats-grid">
+    <div class="stat-card total"><div class="stat-label">Total</div><div class="stat-num" id="statTotal">0</div></div>
+    <div class="stat-card sent"><div class="stat-label">Enviados</div><div class="stat-num" id="statSent">0</div></div>
+    <div class="stat-card pending"><div class="stat-label">Pendentes</div><div class="stat-num" id="statPending">0</div></div>
+    <div class="stat-card error"><div class="stat-label">Erros</div><div class="stat-num" id="statError">0</div></div>
   </div>
 
-  <div class="progress-bar">
-    <div class="progress-fill" id="progressFill"></div>
+  <div class="progress-wrap">
+    <div class="progress-header">
+      <span class="progress-title">Progresso do disparo</span>
+      <span class="progress-pct" id="progressPct">0%</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
   </div>
 
-  <div class="message-section">
-    <div class="section-title">Flyer para envio</div>
-    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-      <input type="file" id="flyerInput" accept="image/*" onchange="loadFlyer(this)"
-        style="background:var(--dark);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">
-      <span id="flyerStatus" style="font-size:13px;color:var(--muted);">Nenhum flyer carregado</span>
-      <img id="flyerPreview" style="height:60px;border-radius:6px;display:none;border:1px solid var(--border);">
+  <div class="card">
+    <div class="card-title"><span class="card-dot"></span>Flyer para envio (opcional)</div>
+    <div class="flyer-zone" id="flyerZone">
+      <input type="file" accept="image/*" onchange="loadFlyer(this)">
+      <div id="flyerZoneText">
+        <div style="font-size:26px;margin-bottom:6px">🖼️</div>
+        <div style="font-size:13px;font-weight:600;color:var(--muted2)">Clique ou arraste o flyer aqui</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">PNG, JPG até 5MB</div>
+      </div>
+      <img id="flyerPreview" class="flyer-preview" style="display:none">
     </div>
   </div>
 
-  <div class="message-section">
-    <div class="section-title">Teste de envio</div>
-    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
-      <input type="text" id="testPhone" value="5521987373552" placeholder="Ex: 5521987373552"
-        style="background:var(--dark);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:8px;font-size:13px;width:220px;font-family:'DM Sans',sans-serif;">
-      <button class="btn btn-green" onclick="sendTest()" id="btnTest">
-        ⚡ Enviar Teste
-      </button>
-      <span id="testStatus" style="font-size:13px;"></span>
-    </div>
-  </div>
-
-  <div class="message-section">
-    <div class="section-title">Mensagem de convite (personalizada por lead)</div>
-    <div class="message-preview" id="msgPreview">
-      Olá, [Nome]! 🙏
-
-Você está convidado(a) para a *Conferência do Ensino 2026* da Igreja Recomeçar!
-
-📖 *"Conferência do Ensino"*
-📅 *23 e 24 de Maio*
-📍 *Igreja Recomeçar*
-🎟️ *Entrada Franca*
-
-Será um tempo especial de ensinamento com:
-✦ Pr Janderson Moura
-✦ Pra Rayssa Moura
-✦ Pra Raquel Jardim
-✦ Pr Herênio Ramiro
-✦ Pra Mabel Valadão
-✦ Pr Matheus Duque
-
-Venha e traga alguém! Te esperamos! 🔥
+  <div class="card">
+    <div class="card-title"><span class="card-dot"></span>Teste de envio</div>
+    <div class="test-row">
+      <input type="text" id="testPhone" value="5521987373552" placeholder="5521999999999" style="max-width:220px">
+      <button class="btn btn-success" onclick="sendTest()" id="btnTest">⚡ Enviar Teste</button>
+      <span id="testStatus" style="font-size:13px"></span>
     </div>
   </div>
 
   <div class="controls">
-    <button class="btn btn-primary" id="btnStart" onclick="startDisparo()">
-      ▶ Iniciar Disparo
-    </button>
-    <button class="btn btn-outline" id="btnPause" onclick="pauseDisparo()" disabled>
-      ⏸ Pausar
-    </button>
-    <button class="btn btn-outline" onclick="resetAll()" id="btnReset">
-      ↺ Resetar
-    </button>
-    <button class="btn btn-green" onclick="exportLog()">
-      ↓ Exportar Log
-    </button>
-    <div class="delay-label">
-      Delay entre envios:
-      <input type="number" id="delayInput" value="4" min="2" max="30"> seg
-    </div>
+    <button class="btn btn-primary" id="btnStart" onclick="startDisparo()">▶ Iniciar Disparo</button>
+    <button class="btn btn-ghost" id="btnPause" onclick="pauseDisparo()" disabled>⏸ Pausar</button>
+    <button class="btn btn-ghost" onclick="resetAll()">↺ Resetar</button>
+    <button class="btn btn-success" onclick="exportLog()">↓ Log</button>
+    <div class="delay-wrap">Delay: <input type="number" id="delayInput" value="4" min="2" max="30"> seg</div>
   </div>
 
-  <div class="table-section">
-    <div class="table-header">
-      <div class="filter-tabs">
-        <button class="filter-tab active" onclick="setFilter('all', this)">Todos</button>
-        <button class="filter-tab" onclick="setFilter('pending', this)">Pendentes</button>
-        <button class="filter-tab" onclick="setFilter('sent', this)">Enviados</button>
-        <button class="filter-tab" onclick="setFilter('error', this)">Erros</button>
+  <div class="table-wrap">
+    <div class="table-toolbar">
+      <div class="filter-pills">
+        <button class="pill active" onclick="setFilter('all',this)">Todos</button>
+        <button class="pill" onclick="setFilter('pending',this)">Pendentes</button>
+        <button class="pill" onclick="setFilter('sent',this)">Enviados</button>
+        <button class="pill" onclick="setFilter('error',this)">Erros</button>
       </div>
-      <input type="text" class="search-input" placeholder="Buscar por nome..." oninput="filterTable(this.value)">
+      <input type="text" class="search-input" placeholder="Buscar..." oninput="filterTable(this.value)">
     </div>
     <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Nome</th>
-          <th>WhatsApp</th>
-          <th>Idade</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="leadsTableBody"></tbody>
+      <thead><tr><th>#</th><th>Nome</th><th>WhatsApp</th><th>Idade</th><th>Status</th></tr></thead>
+      <tbody id="tableBody"></tbody>
     </table>
   </div>
+  <div class="log-box" id="logBox"><div class="log-line info">[ Sistema ] App iniciado.</div></div>
+</div>
 
-  <div class="log-section" id="logSection">
-    <div class="log-line info">[ Sistema ] App iniciado. Aguardando início do disparo.</div>
+<!-- LEADS -->
+<div class="page" id="page-leads">
+  <div class="card">
+    <div class="card-title"><span class="card-dot"></span>Adicionar lead</div>
+    <div class="lead-form">
+      <div class="field-group" style="margin:0"><label class="field-label">Nome completo</label><input type="text" id="newName" placeholder="Nome Sobrenome"></div>
+      <div class="field-group" style="margin:0"><label class="field-label">WhatsApp (com DDI)</label><input type="text" id="newPhone" placeholder="5521999999999"></div>
+      <div class="field-group" style="margin:0"><label class="field-label">Idade</label><input type="number" id="newAge" placeholder="30"></div>
+      <button class="btn btn-primary" onclick="addLead()" style="margin-top:18px">+ Add</button>
+    </div>
+  </div>
+  <div class="leads-toolbar">
+    <span style="font-size:13px;color:var(--muted2);font-weight:600" id="leadCount">0 leads</span>
+    <input type="text" placeholder="Buscar..." oninput="filterLeadsPage(this.value)" style="max-width:180px">
+    <button class="btn btn-ghost" onclick="exportLeads()" style="margin-left:auto">↓ CSV</button>
+    <button class="btn btn-danger" onclick="clearAllLeads()">🗑 Limpar</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Nome</th><th>WhatsApp</th><th>Idade</th><th>Status</th><th></th></tr></thead>
+      <tbody id="leadsPageBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MENSAGEM -->
+<div class="page" id="page-mensagem">
+  <div class="card">
+    <div class="card-title"><span class="card-dot"></span>Texto da mensagem</div>
+    <div class="field-group">
+      <label class="field-label">Use {nome} para personalizar com o primeiro nome de cada lead</label>
+      <textarea id="msgEditor" oninput="updatePreview()"></textarea>
+      <div class="field-hint">*texto* = negrito · _texto_ = itálico · emojis funcionam normalmente</div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button class="btn btn-primary" onclick="saveMessage()">💾 Salvar</button>
+      <button class="btn btn-ghost" onclick="resetMessage()">↺ Padrão</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="card-dot"></span>Prévia (nome de exemplo: Ricardo)</div>
+    <div class="msg-preview" id="msgPreview"></div>
+  </div>
+</div>
+
+<!-- CONFIG -->
+<div class="page" id="page-config">
+  <div class="card">
+    <div class="card-title"><span class="card-dot"></span>Cabeçalho do app</div>
+    <div class="settings-grid">
+      <div class="field-group">
+        <label class="field-label">Título principal</label>
+        <input type="text" id="cfgTitle" placeholder="Ex: Conferência do Ensino 2026">
+        <div class="field-hint">Aparece no topo e na aba do navegador</div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Organização / Subtítulo</label>
+        <input type="text" id="cfgSubtitle" placeholder="Ex: Igreja Recomeçar">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="saveHeader()">💾 Salvar cabeçalho</button>
   </div>
 
-</main>
+  <div class="card">
+    <div class="card-title"><span class="card-dot"></span>Credenciais Z-API</div>
+    <div class="settings-grid">
+      <div class="field-group">
+        <label class="field-label">Instance ID</label>
+        <input type="text" id="cfgInstance" style="font-family:'JetBrains Mono',monospace;font-size:12px">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Token da instância</label>
+        <input type="text" id="cfgToken" style="font-family:'JetBrains Mono',monospace;font-size:12px">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Client-Token (Segurança)</label>
+        <input type="text" id="cfgClientToken" style="font-family:'JetBrains Mono',monospace;font-size:12px">
+        <div class="field-hint">app.z-api.io → Segurança</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="saveCredentials()">💾 Salvar credenciais</button>
+  </div>
+
+  <div class="card" style="border-color:rgba(239,68,68,0.15)">
+    <div class="card-title"><span class="card-dot" style="background:var(--red)"></span>Zona de perigo</div>
+    <button class="btn btn-danger" onclick="resetAllData()">🗑 Resetar todos os dados</button>
+    <div class="field-hint" style="margin-top:8px">Remove leads, mensagem e configurações. Não pode ser desfeito.</div>
+  </div>
+</div>
 
 <script>
-const ZAPI_INSTANCE = "3F2A35F3122FE1FC65737E1C380F897F";
-const ZAPI_TOKEN = "22888B722036811E1B89B68C";
-const ZAPI_CLIENT_TOKEN = "Fb00b55851e244353a697e7470011e051S";
-const FLYER_URL = "https://raw.githubusercontent.com/ricardoquintella-byte/conferencia-disparo/main/Imagem%20do%20WhatsApp%202026-05-17%20%C3%A0s%2019.35.11.jpeg";
+let leads=[],running=false,paused=false,flyerBase64=null,flyerMime='image/jpeg';
+let currentFilter='all',searchQuery='',leadsSearchQuery='',logs=[];
 
-const LEADS_RAW = [
-  ["Thalina Amendola Maleck Serpa", "24988037100", "38"],
-  ["Janaina da Silva Serafim", "2197690-6526", "42"],
-  ["Marcos Braz da Cruz Eleoterio", "21985267779", "44"],
-  ["Natacha Fernandes", "21964383488", "37"],
-  ["Thiago Valente", "21965144338", "38"],
-  ["Letícia Rabelo de Sousa", "21979291292", "32"],
-  ["Deise Martins de Pontes", "21997756415", "46"],
-  ["Diogo dos Santos Ferreira", "21992823533", "37"],
-  ["Gilvanete de Brito Almeida Conceição", "21994181669", "50"],
-  ["Lydia Bulhoes Cytrangulo Nascimento", "21982033177", "28"],
-  ["Mary Lucy Donato Rossignoli", "21980974520", "44"],
-  ["Hilton Cesar de Souza", "21981280601", "56"],
-  ["Patrícia de Oliveira Araujo", "21992178256", "54"],
-  ["Juliana Borges Nascimento Bizzo", "21982732348", "21"],
-  ["Debora Menezes", "21971905334", "47"],
-  ["Maria da Glória Cardoso", "21975872909", "53"],
-  ["Thayane Germano de Oliveira", "21997550426", "33"],
-  ["Amanda Leal Gonçalves de Souza", "351918578006", "23"],
-  ["Lucas Gomes de Andrade", "21979944216", "28"],
-  ["Dayane de Araujo Moureira Ferreira", "21969283032", "29"],
-  ["José Tiago da Silva", "21982273565", "35"],
-  ["Alan Leonel Fontinele de Carvalho", "21995246291", "44"],
-  ["Élia Daltro", "21988900905", "63"],
-  ["Bruna Nascimento Simões", "21980524449", "47"],
-  ["Zoé Cavalcante Ribeiro", "21993605930", "18"],
-  ["Misael Mululo", "21969302341", "33"],
-  ["Sandra Soares Guimaraes", "21964833878", "56"],
-  ["Camila Guzzo da Silva", "21991241716", "32"],
-  ["Manuela Anselme Bon", "21997756178", "12"],
-  ["Livia Ponciano da Silva de Oliveira", "21993713246", "34"],
-  ["Ana Beatriz de Melo Corrêa e Castro", "21976988282", "31"],
-  ["Maria Eduarda Seugling Fernandes", "11956561108", "17"],
-  ["Júlia Medeiros de Souza", "21969271412", "12"],
-  ["Luiza Doria", "5521995792839", "12"],
-  ["Bernardo Rosa Martins", "21976529291", "14"],
-  ["Daniel Gonçalves", "21979591522", "17"],
-  ["Rebecca Monteiro", "21982572409", "16"],
-  ["Michelle Janelli Buarque de Macedo do Amaral", "21973577295", "45"],
-  ["Tamiris Silva Pereira", "21994308120", "33"],
-  ["Leone de Sousa Silva", "21971234762", "31"],
-  ["Daniel Freitas do Amaral", "21971330369", "44"],
-  ["Marise Reis Figueras", "21964441452", "44"],
-  ["Fernanda Cristina Ventura de Oliveira", "21998364865", "38"],
-  ["Samuel de Oliveira Gomes", "21977099374", "12"],
-  ["Vivian Vianna Torquato", "21985982677", "42"],
-  ["Alessandra Muller", "21995457477", "36"],
-  ["Ana Clara Fidelis de Lima", "21920069522", "22"],
-  ["Renato Ramos Marotta", "21999751454", "54"],
-  ["Matheus Lucas Mozer de Oliveira", "21995276794", "28"],
-  ["Bruna Morais Dantas", "21974159339", "38"],
-  ["José Eduardo Teixeira Pinto", "21972821963", "51"],
-  ["Raphael Grijó Tavares de Sousa Mendes", "21994809841", "19"],
-  ["Cátia Regina Bessa Teixeira Pinto", "21971880914", "46"],
-  ["Ana Costa", "21976012650", "30"],
-  ["Andréia Rodrigues Marotta", "21964605782", "47"],
-  ["Charles Cunha da Silva", "21971160518", "41"],
-  ["Rachel Frischgesell de Campos Vianna", "21982826268", "54"],
-  ["Luís Miguel Alves de Freitas", "21971777407", "17"],
-  ["Ana Paula Menezes", "21995723740", "42"],
-  ["Leticia França", "21979650333", "29"],
-  ["Hanna Aarao Cotta Resende", "21982287348", "35"],
-  ["Leticia Bezerra Souza", "21981490641", "25"],
-  ["Guilherme Gimenes Maranhão Barbosa", "21979908200", "36"],
-  ["Rodrigo Silva da Rocha", "21978886342", "18"],
-  ["Flavia Rosa Dias", "21997369796", "49"],
-  ["Daniel Yomura Martins", "21964107275", "45"],
-  ["Elizete Silva de Paula", "21971317838", "71"],
-  ["Fabiane Lopes Cordeiro Rocha", "21995759055", "44"],
-  ["Pricila Gonçalves Alves", "52980231036", "42"],
-  ["Rafael Pinto dos Santos", "21964431191", "42"],
-  ["Ana Carolina Villarinho Belchior", "21999669396", "48"],
-  ["Jaqueline Madeiro Avelino", "21994437253", "41"],
-  ["Wallace Gomes", "21959011551", "31"],
-  ["Quezia Vieira Francisco", "21985821696", "29"],
-  ["Sophia Soares Santos", "21986537556", "17"],
-  ["Camila Félix Querioz", "21984591880", "27"],
-  ["Diego Resende Teixeira Cotta", "21979423338", "39"],
-  ["Nathalia Miarelli Leão", "21999843353", "50"],
-  ["Eliana Barbosa Serafim", "21964890863", "41"],
-  ["Rafael Santos de Souza", "21996209207", "16"],
-  ["Elvis Lucyan Costa Ferreira", "21994219398", "36"],
-  ["Danilo Córdova dos Santos", "21967617011", "33"],
-  ["Amanda Monteiro Luiz Alves", "21999887264", "31"],
-  ["Rebeca Moreira de Abreu", "21964269786", "35"],
-  ["Flávia Lopes", "21999965126", "35"],
-  ["Ana Paula de Oliveira Rocha", "21996344351", "43"],
-  ["Ana Cláudia Saraiva Fernandes", "21969668584", "40"],
-  ["Roseane Nascimento", "21987861423", "60"],
-  ["Rachel Moura da Palma Louzada", "21969016968", "21"],
-  ["Fernando Marcio Loureiro de Oliveira", "21974640479", "52"],
-  ["Valeria de Oliveira Pinheiro", "21994925286", "52"],
-  ["Michelle Estevan Macedo", "21985262211", "41"],
-  ["Marcia Maria Corrêa Pinto Duarte Trojman", "21999321275", "64"],
-  ["Natália Carnaúba Pereira Oliveira", "21998878115", "32"],
-  ["Carolinne Marmute de Oliveira Moura", "21988045738", "31"],
-  ["Fernanda dos Santos", "21965346665", "48"],
-  ["Vanessa Vieira Ribeiro", "21995445449", "25"],
-  ["Bruna Vasconcelos Teixeira de Moraes", "24992841635", "24"],
-  ["Cintia Lessa", "21996330014", "43"],
-  ["Leonardo Esperão Martins", "21997559981", "12"],
-  ["Gabriel Borges Ortega", "21969627246", "31"],
-  ["Davi Victoria Kitzinger Avril", "21967811986", "15"],
-  ["Pietro Amaro Tavares Machado", "21987536059", "15"],
-  ["Nathielle Gomes da Silva", "21987926719", "29"],
-  ["Mayara Ribeiro de Almeida", "21965674173", "32"],
-  ["Sofia de Souza", "21975157087", "13"],
-  ["Adriane Ferretti Salvitti", "21990004336", "46"],
-  ["Carlos Roberto Cruz Mathias da Cunha", "21995918752", "43"],
-  ["Lyara de Medeiros Benevides Varella", "21964774497", "29"],
-  ["Emanuele Ribeiro Ferreira", "21996437202", "15"],
-  ["Nina Martins de Souza", "21992155225", "15"],
-  ["Marina França", "21972072472", "33"],
-  ["Pamela Cardoso", "21970126047", "28"],
-  ["Veronica Pinheiro", "21976103020", "37"],
-  ["Caique Ribeiro de Souza", "21981580276", "21"],
-  ["Daniele Janaína Viana da Silva", "21975329743", "40"],
-  ["Rafaela Luciana Silveira Santos Leite", "21974375489", "35"],
-  ["Bárbara A S de Oliveira", "21966527004", "32"],
-  ["Isabel Helena Ribeiro", "21998346640", "43"],
-  ["Maria Clara Oliveira Caetano", "21989136207", "24"],
-  ["Cristiane Vieira da Silva", "21964255810", "56"],
-  ["Karol Pereira Soares", "21984168241", "31"],
-  ["Laryssa Saraiva Martins", "21972895571", "14"],
-  ["Yasury Maria Arias", "21969349485", "38"],
-  ["Giovanna Luz Rodrigues", "21997028482", "13"],
-  ["Moisés Saraiva Alves", "21996008931", "12"],
-  ["Bruna Monteiro Coutinho", "21988653348", "24"],
-  ["Gabriela Gomes", "21985070530", "25"],
-  ["Mariana da Silva", "21994203663", "28"],
-  ["Sergio Campos Peres", "21981992663", "42"],
-  ["Marcus Vinícius Braga Pereira", "21990573098", "34"],
-  ["Priscila Duarte Pereira", "21979072630", "39"],
-  ["Arine Vieira de Carvalho", "21997050289", "34"],
-  ["Berlim de Paula Junior", "21988277593", "44"],
-  ["Raí Silva", "21967717940", "46"],
-  ["Letícia de Araujo Monteiro", "21982475516", "24"],
-  ["Thaís Barros Ferreira", "21979659070", "25"],
-  ["Juliana Alves Moreira Campos", "21981142255", "42"],
-  ["Romulo André Rodrigues de Abreu", "21981512352", "43"],
-  ["Raphael Vieira de Freitas", "21984222631", "31"],
-  ["Laura Jardim Quintella Freire", "", "12"],
-];
+let config={
+  title:'Conferência do Ensino 2026',
+  subtitle:'Igreja Recomeçar',
+  instance:'3F2A35F3122FE1FC65737E1C380F897F',
+  token:'22888B722036811E1B89B68C',
+  clientToken:'Fb00b55851e244353a697e7470011e051S',
+  message:'Olá, {nome}! 🙏\n\nVocê está convidado(a) para a *Conferência do Ensino 2026* da Igreja Recomeçar!\n\n📖 *"Conferência do Ensino"*\n📅 *23 e 24 de Maio*\n📍 *Igreja Recomeçar*\n🎟️ *Entrada Franca*\n\nSerá um tempo especial de ensinamento com:\n✦ Pr Janderson Moura\n✦ Pra Rayssa Moura\n✦ Pra Raquel Jardim\n✦ Pr Herênio Ramiro\n✦ Pra Mabel Valadão\n✦ Pr Matheus Duque\n\nVenha e traga alguém! Te esperamos! 🔥'
+};
 
-function cleanPhone(p) {
-  if (!p) return null;
-  let n = p.replace(/\D/g, '');
-  // Remove leading 0s from DDD
-  if (n.startsWith('0')) n = n.substring(1);
-  // Add country code Brazil if not present
-  if (n.length === 10 || n.length === 11) n = '55' + n;
-  // Remove extra country code duplications
-  if (n.startsWith('5555')) n = n.substring(2);
-  if (n.length < 10) return null;
-  return n;
+const LEADS_DEFAULT=[["Thalina Amendola Maleck Serpa","24988037100","38"],["Janaina da Silva Serafim","2197690-6526","42"],["Marcos Braz da Cruz Eleoterio","21985267779","44"],["Natacha Fernandes","21964383488","37"],["Thiago Valente","21965144338","38"],["Letícia Rabelo de Sousa","21979291292","32"],["Deise Martins de Pontes","21997756415","46"],["Diogo dos Santos Ferreira","21992823533","37"],["Gilvanete de Brito Almeida Conceição","21994181669","50"],["Lydia Bulhoes Cytrangulo Nascimento","21982033177","28"],["Mary Lucy Donato Rossignoli","21980974520","44"],["Hilton Cesar de Souza","21981280601","56"],["Patrícia de Oliveira Araujo","21992178256","54"],["Juliana Borges Nascimento Bizzo","21982732348","21"],["Debora Menezes","21971905334","47"],["Maria da Glória Cardoso","21975872909","53"],["Thayane Germano de Oliveira","21997550426","33"],["Amanda Leal Gonçalves de Souza","351918578006","23"],["Lucas Gomes de Andrade","21979944216","28"],["Dayane de Araujo Moureira Ferreira","21969283032","29"],["José Tiago da Silva","21982273565","35"],["Alan Leonel Fontinele de Carvalho","21995246291","44"],["Élia Daltro","21988900905","63"],["Bruna Nascimento Simões","21980524449","47"],["Zoé Cavalcante Ribeiro","21993605930","18"],["Misael Mululo","21969302341","33"],["Sandra Soares Guimaraes","21964833878","56"],["Camila Guzzo da Silva","21991241716","32"],["Manuela Anselme Bon","21997756178","12"],["Livia Ponciano da Silva de Oliveira","21993713246","34"],["Ana Beatriz de Melo Corrêa e Castro","21976988282","31"],["Maria Eduarda Seugling Fernandes","11956561108","17"],["Júlia Medeiros de Souza","21969271412","12"],["Luiza Doria","5521995792839","12"],["Bernardo Rosa Martins","21976529291","14"],["Daniel Gonçalves","21979591522","17"],["Rebecca Monteiro","21982572409","16"],["Michelle Janelli Buarque de Macedo do Amaral","21973577295","45"],["Tamiris Silva Pereira","21994308120","33"],["Leone de Sousa Silva","21971234762","31"],["Daniel Freitas do Amaral","21971330369","44"],["Marise Reis Figueras","21964441452","44"],["Fernanda Cristina Ventura de Oliveira","21998364865","38"],["Samuel de Oliveira Gomes","21977099374","12"],["Vivian Vianna Torquato","21985982677","42"],["Alessandra Muller","21995457477","36"],["Ana Clara Fidelis de Lima","21920069522","22"],["Renato Ramos Marotta","21999751454","54"],["Matheus Lucas Mozer de Oliveira","21995276794","28"],["Bruna Morais Dantas","21974159339","38"],["José Eduardo Teixeira Pinto","21972821963","51"],["Raphael Grijó Tavares de Sousa Mendes","21994809841","19"],["Cátia Regina Bessa Teixeira Pinto","21971880914","46"],["Ana Costa","21976012650","30"],["Andréia Rodrigues Marotta","21964605782","47"],["Charles Cunha da Silva","21971160518","41"],["Rachel Frischgesell de Campos Vianna","21982826268","54"],["Luís Miguel Alves de Freitas","21971777407","17"],["Ana Paula Menezes","21995723740","42"],["Leticia França","21979650333","29"],["Hanna Aarao Cotta Resende","21982287348","35"],["Leticia Bezerra Souza","21981490641","25"],["Guilherme Gimenes Maranhão Barbosa","21979908200","36"],["Rodrigo Silva da Rocha","21978886342","18"],["Flavia Rosa Dias","21997369796","49"],["Daniel Yomura Martins","21964107275","45"],["Elizete Silva de Paula","21971317838","71"],["Fabiane Lopes Cordeiro Rocha","21995759055","44"],["Pricila Gonçalves Alves","52980231036","42"],["Rafael Pinto dos Santos","21964431191","42"],["Ana Carolina Villarinho Belchior","21999669396","48"],["Jaqueline Madeiro Avelino","21994437253","41"],["Wallace Gomes","21959011551","31"],["Quezia Vieira Francisco","21985821696","29"],["Sophia Soares Santos","21986537556","17"],["Camila Félix Querioz","21984591880","27"],["Diego Resende Teixeira Cotta","21979423338","39"],["Nathalia Miarelli Leão","21999843353","50"],["Eliana Barbosa Serafim","21964890863","41"],["Rafael Santos de Souza","21996209207","16"],["Elvis Lucyan Costa Ferreira","21994219398","36"],["Danilo Córdova dos Santos","21967617011","33"],["Amanda Monteiro Luiz Alves","21999887264","31"],["Rebeca Moreira de Abreu","21964269786","35"],["Flávia Lopes","21999965126","35"],["Ana Paula de Oliveira Rocha","21996344351","43"],["Ana Cláudia Saraiva Fernandes","21969668584","40"],["Roseane Nascimento","21987861423","60"],["Rachel Moura da Palma Louzada","21969016968","21"],["Fernando Marcio Loureiro de Oliveira","21974640479","52"],["Valeria de Oliveira Pinheiro","21994925286","52"],["Michelle Estevan Macedo","21985262211","41"],["Marcia Maria Corrêa Pinto Duarte Trojman","21999321275","64"],["Natália Carnaúba Pereira Oliveira","21998878115","32"],["Carolinne Marmute de Oliveira Moura","21988045738","31"],["Fernanda dos Santos","21965346665","48"],["Vanessa Vieira Ribeiro","21995445449","25"],["Bruna Vasconcelos Teixeira de Moraes","24992841635","24"],["Cintia Lessa","21996330014","43"],["Leonardo Esperão Martins","21997559981","12"],["Gabriel Borges Ortega","21969627246","31"],["Davi Victoria Kitzinger Avril","21967811986","15"],["Pietro Amaro Tavares Machado","21987536059","15"],["Nathielle Gomes da Silva","21987926719","29"],["Mayara Ribeiro de Almeida","21965674173","32"],["Sofia de Souza","21975157087","13"],["Adriane Ferretti Salvitti","21990004336","46"],["Carlos Roberto Cruz Mathias da Cunha","21995918752","43"],["Lyara de Medeiros Benevides Varella","21964774497","29"],["Emanuele Ribeiro Ferreira","21996437202","15"],["Nina Martins de Souza","21992155225","15"],["Marina França","21972072472","33"],["Pamela Cardoso","21970126047","28"],["Veronica Pinheiro","21976103020","37"],["Caique Ribeiro de Souza","21981580276","21"],["Daniele Janaína Viana da Silva","21975329743","40"],["Rafaela Luciana Silveira Santos Leite","21974375489","35"],["Bárbara A S de Oliveira","21966527004","32"],["Isabel Helena Ribeiro","21998346640","43"],["Maria Clara Oliveira Caetano","21989136207","24"],["Cristiane Vieira da Silva","21964255810","56"],["Karol Pereira Soares","21984168241","31"],["Laryssa Saraiva Martins","21972895571","14"],["Yasury Maria Arias","21969349485","38"],["Giovanna Luz Rodrigues","21997028482","13"],["Moisés Saraiva Alves","21996008931","12"],["Bruna Monteiro Coutinho","21988653348","24"],["Gabriela Gomes","21985070530","25"],["Mariana da Silva","21994203663","28"],["Sergio Campos Peres","21981992663","42"],["Marcus Vinícius Braga Pereira","21990573098","34"],["Priscila Duarte Pereira","21979072630","39"],["Arine Vieira de Carvalho","21997050289","34"],["Berlim de Paula Junior","21988277593","44"],["Raí Silva","21967717940","46"],["Letícia de Araujo Monteiro","21982475516","24"],["Thaís Barros Ferreira","21979659070","25"],["Juliana Alves Moreira Campos","21981142255","42"],["Romulo André Rodrigues de Abreu","21981512352","43"],["Raphael Vieira de Freitas","21984222631","31"],["Laura Jardim Quintella Freire","","12"]];
+
+function cleanPhone(p){if(!p)return null;let n=p.replace(/\D/g,'');if(n.startsWith('0'))n=n.substring(1);if(n.length===10||n.length===11)n='55'+n;if(n.startsWith('5555'))n=n.substring(2);return n.length>=10?n:null;}
+function buildMessage(name){return config.message.replace(/\{nome\}/g,name.split(' ')[0]);}
+function showToast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;setTimeout(()=>t.className='toast',3000);}
+function addLog(msg,type=''){const ts=new Date().toLocaleTimeString('pt-BR');const el=document.createElement('div');el.className=`log-line ${type}`;el.textContent=`[ ${ts} ] ${msg}`;document.getElementById('logBox').prepend(el);logs.unshift(`[ ${ts} ] ${msg}`);}
+
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(id==='config')loadConfigFields();
+  if(id==='mensagem'){document.getElementById('msgEditor').value=config.message;updatePreview();}
+  if(id==='leads')renderLeadsPage();
 }
 
-function buildMessage(name) {
-  const firstName = name.split(' ')[0];
-  return `Olá, ${firstName}! 🙏\n\nVocê está convidado(a) para a *Conferência do Ensino 2026* da Igreja Recomeçar!\n\n📖 *"Conferência do Ensino"*\n📅 *23 e 24 de Maio*\n📍 *Igreja Recomeçar*\n🎟️ *Entrada Franca*\n\nSerá um tempo especial de ensinamento com:\n✦ Pr Janderson Moura\n✦ Pra Rayssa Moura\n✦ Pra Raquel Jardim\n✦ Pr Herênio Ramiro\n✦ Pra Mabel Valadão\n✦ Pr Matheus Duque\n\nVenha e traga alguém! Te esperamos! 🔥`;
-}
-
-let leads = [];
-let running = false;
-let paused = false;
-let currentIndex = 0;
-let currentFilter = 'all';
-let searchQuery = '';
-let logs = [];
-
-function initLeads() {
-  leads = LEADS_RAW.map((row, i) => ({
-    id: i,
-    name: row[0],
-    rawPhone: row[1],
-    phone: cleanPhone(row[1]),
-    age: row[2],
-    status: row[1] && cleanPhone(row[1]) ? 'pending' : 'error',
-    errorMsg: row[1] && cleanPhone(row[1]) ? '' : 'Sem telefone'
-  }));
+function init(){
+  loadFromStorage();
+  applyHeader();
   renderTable();
   updateStats();
-  updateMsgPreview();
+  document.getElementById('msgEditor').value=config.message;
+  updatePreview();
 }
 
-function updateMsgPreview() {
-  const sample = leads.find(l => l.name);
-  if (sample) {
-    document.getElementById('msgPreview').textContent = buildMessage(sample.name);
-  }
-}
-
-function updateStats() {
-  const total = leads.length;
-  const sent = leads.filter(l => l.status === 'sent').length;
-  const pending = leads.filter(l => l.status === 'pending').length;
-  const error = leads.filter(l => l.status === 'error').length;
-  document.getElementById('statTotal').textContent = total;
-  document.getElementById('statSent').textContent = sent;
-  document.getElementById('statPending').textContent = pending;
-  document.getElementById('statError').textContent = error;
-  const pct = total > 0 ? (sent / total * 100) : 0;
-  document.getElementById('progressFill').style.width = pct + '%';
-}
-
-function getStatusBadge(status, msg) {
-  const map = {
-    pending: `<span class="status-badge status-pending"><span class="dot"></span>Pendente</span>`,
-    sent: `<span class="status-badge status-sent"><span class="dot"></span>Enviado</span>`,
-    error: `<span class="status-badge status-error"><span class="dot"></span>${msg || 'Erro'}</span>`,
-    sending: `<span class="status-badge status-sending"><span class="spinner"></span>Enviando...</span>`,
-  };
-  return map[status] || map.pending;
-}
-
-function setFilter(f, el) {
-  currentFilter = f;
-  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  renderTable();
-}
-
-function filterTable(q) {
-  searchQuery = q.toLowerCase();
-  renderTable();
-}
-
-function renderTable() {
-  const tbody = document.getElementById('leadsTableBody');
-  let filtered = leads.filter(l => {
-    const matchFilter = currentFilter === 'all' || l.status === currentFilter;
-    const matchSearch = !searchQuery || l.name.toLowerCase().includes(searchQuery);
-    return matchFilter && matchSearch;
-  });
-  tbody.innerHTML = filtered.map(l => `
-    <tr id="row-${l.id}">
-      <td style="color:var(--muted);font-size:11px;">${l.id + 1}</td>
-      <td>${l.name}</td>
-      <td class="phone-col">${l.phone || '<span style="color:var(--red)">—</span>'}</td>
-      <td style="color:var(--muted)">${l.age}</td>
-      <td>${getStatusBadge(l.status, l.errorMsg)}</td>
-    </tr>
-  `).join('');
-}
-
-function addLog(msg, type = '') {
-  const ts = new Date().toLocaleTimeString('pt-BR');
-  const line = document.createElement('div');
-  line.className = `log-line ${type}`;
-  line.textContent = `[ ${ts} ] ${msg}`;
-  const logEl = document.getElementById('logSection');
-  logEl.prepend(line);
-  logs.unshift(`[ ${ts} ] ${msg}`);
-}
-
-let flyerBase64 = null;
-let flyerMime = 'image/jpeg';
-
-function loadFlyer(input) {
-  const file = input.files[0];
-  if (!file) return;
-  flyerMime = file.type || 'image/jpeg';
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    flyerBase64 = e.target.result.split(',')[1];
-    document.getElementById('flyerStatus').textContent = `✓ ${file.name} carregado`;
-    document.getElementById('flyerStatus').style.color = 'var(--green)';
-    document.getElementById('flyerPreview').src = e.target.result;
-    document.getElementById('flyerPreview').style.display = 'block';
-    addLog(`Flyer carregado: ${file.name}`, 'ok');
-  };
-  reader.readAsDataURL(file);
-}
-
-async function sendMessage(phone, message) {
-  if (flyerBase64) {
-    // Enviar imagem com legenda
-    const url = `https://api.z-api.io/instances/${ZAPI_INSTANCE}/token/${ZAPI_TOKEN}/send-image`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Client-Token': ZAPI_CLIENT_TOKEN
-      },
-      body: JSON.stringify({
-        phone,
-        image: `data:${flyerMime};base64,${flyerBase64}`,
-        caption: message
-      })
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || `HTTP ${res.status}`);
+function loadFromStorage(){
+  try{
+    const sc=localStorage.getItem('disparo_config');
+    if(sc)Object.assign(config,JSON.parse(sc));
+    const sl=localStorage.getItem('disparo_leads');
+    if(sl){leads=JSON.parse(sl);}
+    else{
+      leads=LEADS_DEFAULT.map((r,i)=>({id:i,name:r[0],phone:cleanPhone(r[1]),rawPhone:r[1],age:r[2],status:r[1]&&cleanPhone(r[1])?'pending':'error',errorMsg:r[1]&&cleanPhone(r[1])?'':'Sem telefone'}));
+      saveLeads();
     }
-    return await res.json();
-  } else {
-    // Fallback: só texto
-    const url = `https://api.z-api.io/instances/${ZAPI_INSTANCE}/token/${ZAPI_TOKEN}/send-text`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Client-Token': ZAPI_CLIENT_TOKEN
-      },
-      body: JSON.stringify({ phone, message })
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || `HTTP ${res.status}`);
-    }
-    return await res.json();
+  }catch(e){leads=LEADS_DEFAULT.map((r,i)=>({id:i,name:r[0],phone:cleanPhone(r[1]),rawPhone:r[1],age:r[2],status:r[1]&&cleanPhone(r[1])?'pending':'error',errorMsg:r[1]&&cleanPhone(r[1])?'':'Sem telefone'}));}
+}
+
+function saveLeads(){try{localStorage.setItem('disparo_leads',JSON.stringify(leads));}catch(e){}}
+function saveConfig(){try{localStorage.setItem('disparo_config',JSON.stringify(config));}catch(e){}}
+function applyHeader(){document.getElementById('navTitle').textContent=config.title||'Disparo WA';document.getElementById('pageTitle').textContent=config.title||'Disparo WA';}
+
+function loadFlyer(input){
+  const file=input.files[0];if(!file)return;
+  flyerMime=file.type||'image/jpeg';
+  const reader=new FileReader();
+  reader.onload=(e)=>{
+    flyerBase64=e.target.result.split(',')[1];
+    document.getElementById('flyerZone').classList.add('loaded');
+    document.getElementById('flyerZoneText').style.display='none';
+    const img=document.getElementById('flyerPreview');img.src=e.target.result;img.style.display='block';
+    addLog(`Flyer: ${file.name}`,'ok');showToast('Flyer carregado!','ok');
+  };reader.readAsDataURL(file);
+}
+
+function updateStats(){
+  const total=leads.length,sent=leads.filter(l=>l.status==='sent').length,pending=leads.filter(l=>l.status==='pending').length,error=leads.filter(l=>l.status==='error').length;
+  document.getElementById('statTotal').textContent=total;document.getElementById('statSent').textContent=sent;
+  document.getElementById('statPending').textContent=pending;document.getElementById('statError').textContent=error;
+  const pct=total>0?Math.round(sent/total*100):0;
+  document.getElementById('progressFill').style.width=pct+'%';document.getElementById('progressPct').textContent=pct+'%';
+}
+
+function getBadge(status,msg){
+  const map={pending:`<span class="badge badge-pending"><span class="badge-dot"></span>Pendente</span>`,sent:`<span class="badge badge-sent"><span class="badge-dot"></span>Enviado</span>`,error:`<span class="badge badge-error"><span class="badge-dot"></span>${msg||'Erro'}</span>`,sending:`<span class="badge badge-sending"><span class="spinner"></span>Enviando</span>`};
+  return map[status]||map.pending;
+}
+
+function setFilter(f,el){currentFilter=f;document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');renderTable();}
+function filterTable(q){searchQuery=q.toLowerCase();renderTable();}
+function renderTable(){
+  const filtered=leads.filter(l=>(currentFilter==='all'||l.status===currentFilter)&&(!searchQuery||l.name.toLowerCase().includes(searchQuery)));
+  document.getElementById('tableBody').innerHTML=filtered.map(l=>`<tr id="row-${l.id}"><td class="td-num">${l.id+1}</td><td style="font-weight:500">${l.name}</td><td class="td-phone">${l.phone||'<span style="color:var(--red)">—</span>'}</td><td style="color:var(--muted)">${l.age||'—'}</td><td>${getBadge(l.status,l.errorMsg)}</td></tr>`).join('');
+}
+
+function updateRowStatus(id,status,msg){const lead=leads.find(l=>l.id===id);if(!lead)return;lead.status=status;lead.errorMsg=msg||'';const row=document.getElementById(`row-${id}`);if(row)row.cells[4].innerHTML=getBadge(status,msg);updateStats();}
+
+async function sendMessage(phone,message){
+  const endpoint=flyerBase64?'send-image':'send-text';
+  const url=`https://api.z-api.io/instances/${config.instance}/token/${config.token}/${endpoint}`;
+  const body=flyerBase64?{phone,image:`data:${flyerMime};base64,${flyerBase64}`,caption:message}:{phone,message};
+  const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','Client-Token':config.clientToken},body:JSON.stringify(body)});
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.message||`HTTP ${res.status}`);}
+  return await res.json();
+}
+
+async function sendTest(){
+  const phone=document.getElementById('testPhone').value.replace(/\D/g,'');
+  const statusEl=document.getElementById('testStatus'),btn=document.getElementById('btnTest');
+  if(!phone||phone.length<10){statusEl.style.color='var(--red)';statusEl.textContent='✗ Número inválido';return;}
+  btn.disabled=true;statusEl.style.color='var(--accent)';statusEl.textContent='⏳ Enviando...';
+  try{await sendMessage(phone,buildMessage('Ricardo'));statusEl.style.color='var(--green)';statusEl.textContent='✓ Enviado!';addLog(`Teste → ${phone}`,'ok');showToast('Teste enviado!','ok');}
+  catch(e){statusEl.style.color='var(--red)';statusEl.textContent=`✗ ${e.message}`;addLog(`Erro teste: ${e.message}`,'err');}
+  btn.disabled=false;
+}
+
+async function startDisparo(){
+  if(running&&!paused)return;
+  running=true;paused=false;
+  document.getElementById('btnStart').disabled=true;document.getElementById('btnPause').disabled=false;
+  const delay=parseInt(document.getElementById('delayInput').value)*1000||4000;
+  const pending=leads.filter(l=>l.status==='pending');
+  addLog(`Iniciando disparo → ${pending.length} leads`,'info');
+  for(let i=0;i<pending.length;i++){
+    if(!running)break;while(paused)await new Promise(r=>setTimeout(r,500));
+    const lead=pending[i];updateRowStatus(lead.id,'sending');addLog(`→ ${lead.name} (${lead.phone})`);
+    try{await sendMessage(lead.phone,buildMessage(lead.name));updateRowStatus(lead.id,'sent');addLog(`✓ ${lead.name}`,'ok');}
+    catch(e){updateRowStatus(lead.id,'error',e.message);addLog(`✗ ${lead.name}: ${e.message}`,'err');}
+    saveLeads();
+    if(i<pending.length-1)await new Promise(r=>setTimeout(r,delay));
   }
+  running=false;paused=false;
+  document.getElementById('btnStart').disabled=false;document.getElementById('btnPause').disabled=true;
+  addLog('Disparo concluído!','info');showToast('Disparo concluído!','ok');
 }
 
-function updateRowStatus(id, status, msg) {
-  const lead = leads[id];
-  lead.status = status;
-  lead.errorMsg = msg || '';
-  const row = document.getElementById(`row-${id}`);
-  if (row) {
-    row.cells[4].innerHTML = getStatusBadge(status, msg);
-  }
-  updateStats();
+function pauseDisparo(){paused=!paused;document.getElementById('btnPause').textContent=paused?'▶ Retomar':'⏸ Pausar';addLog(paused?'Pausado.':'Retomado.','info');}
+
+function resetAll(){
+  if(running){running=false;paused=false;}
+  leads.forEach(l=>{if(l.phone)l.status='pending';l.errorMsg='';});
+  saveLeads();document.getElementById('btnStart').disabled=false;document.getElementById('btnPause').disabled=true;document.getElementById('btnPause').textContent='⏸ Pausar';
+  renderTable();updateStats();addLog('Reset realizado.','info');showToast('Leads resetados.','ok');
 }
 
-async function startDisparo() {
-  if (running && !paused) return;
-  running = true;
-  paused = false;
-  document.getElementById('btnStart').disabled = true;
-  document.getElementById('btnPause').disabled = false;
+function exportLog(){const blob=new Blob([logs.join('\n')],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='log_disparo.txt';a.click();}
 
-  const delay = parseInt(document.getElementById('delayInput').value) * 1000 || 4000;
-  const pendingLeads = leads.filter(l => l.status === 'pending');
-
-  addLog(`Iniciando disparo para ${pendingLeads.length} leads pendentes...`, 'info');
-
-  for (let i = 0; i < pendingLeads.length; i++) {
-    if (!running) break;
-    while (paused) {
-      await new Promise(r => setTimeout(r, 500));
-    }
-
-    const lead = pendingLeads[i];
-    updateRowStatus(lead.id, 'sending');
-    addLog(`Enviando para ${lead.name} (${lead.phone})...`);
-
-    try {
-      await sendMessage(lead.phone, buildMessage(lead.name));
-      updateRowStatus(lead.id, 'sent');
-      addLog(`✓ Enviado para ${lead.name}`, 'ok');
-    } catch (e) {
-      updateRowStatus(lead.id, 'error', e.message);
-      addLog(`✗ Erro em ${lead.name}: ${e.message}`, 'err');
-    }
-
-    if (i < pendingLeads.length - 1) {
-      await new Promise(r => setTimeout(r, delay));
-    }
-  }
-
-  running = false;
-  paused = false;
-  document.getElementById('btnStart').disabled = false;
-  document.getElementById('btnPause').disabled = true;
-  addLog('Disparo concluído!', 'info');
+function renderLeadsPage(){
+  const filtered=leads.filter(l=>!leadsSearchQuery||l.name.toLowerCase().includes(leadsSearchQuery));
+  document.getElementById('leadCount').textContent=`${leads.length} leads`;
+  document.getElementById('leadsPageBody').innerHTML=filtered.map(l=>`<tr><td class="td-num">${l.id+1}</td><td style="font-weight:500">${l.name}</td><td class="td-phone">${l.phone||'—'}</td><td style="color:var(--muted)">${l.age||'—'}</td><td>${getBadge(l.status,l.errorMsg)}</td><td><button class="btn btn-danger" style="padding:4px 10px;font-size:11px" onclick="removeLead(${l.id})">✕</button></td></tr>`).join('');
 }
 
-function pauseDisparo() {
-  if (!running) return;
-  paused = !paused;
-  document.getElementById('btnPause').textContent = paused ? '▶ Retomar' : '⏸ Pausar';
-  addLog(paused ? 'Disparo pausado.' : 'Disparo retomado.', 'info');
+function filterLeadsPage(q){leadsSearchQuery=q.toLowerCase();renderLeadsPage();}
+
+function addLead(){
+  const name=document.getElementById('newName').value.trim();
+  const phone=document.getElementById('newPhone').value.trim();
+  const age=document.getElementById('newAge').value.trim();
+  if(!name){showToast('Digite o nome.','err');return;}
+  const cleaned=cleanPhone(phone);
+  const newId=leads.length>0?Math.max(...leads.map(l=>l.id))+1:0;
+  leads.push({id:newId,name,phone:cleaned,rawPhone:phone,age,status:cleaned?'pending':'error',errorMsg:cleaned?'':'Sem telefone'});
+  saveLeads();renderLeadsPage();renderTable();updateStats();
+  document.getElementById('newName').value='';document.getElementById('newPhone').value='';document.getElementById('newAge').value='';
+  showToast(`${name} adicionado!`,'ok');
 }
 
-function resetAll() {
-  if (running) { running = false; paused = false; }
-  leads.forEach(l => {
-    if (l.phone) l.status = 'pending';
-    l.errorMsg = '';
-  });
-  document.getElementById('btnStart').disabled = false;
-  document.getElementById('btnPause').disabled = true;
-  document.getElementById('btnPause').textContent = '⏸ Pausar';
-  renderTable();
-  updateStats();
-  addLog('Reset realizado. Todos os leads voltaram para pendente.', 'info');
+function removeLead(id){leads=leads.filter(l=>l.id!==id);saveLeads();renderLeadsPage();renderTable();updateStats();}
+
+function clearAllLeads(){
+  if(!confirm('Remover TODOS os leads?'))return;
+  leads=[];saveLeads();renderLeadsPage();renderTable();updateStats();showToast('Leads removidos.','ok');
 }
 
-function exportLog() {
-  const blob = new Blob([logs.join('\n')], { type: 'text/plain' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'log_disparo_conferencia.txt';
-  a.click();
+function exportLeads(){
+  const rows=['Nome,WhatsApp,Idade,Status'];
+  leads.forEach(l=>rows.push(`"${l.name}","${l.phone||''}","${l.age||''}","${l.status}"`));
+  const blob=new Blob([rows.join('\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='leads.csv';a.click();
 }
 
-async function sendTest() {
-  const phone = document.getElementById('testPhone').value.replace(/\D/g, '');
-  const statusEl = document.getElementById('testStatus');
-  const btn = document.getElementById('btnTest');
-  if (!phone || phone.length < 10) {
-    statusEl.style.color = 'var(--red)';
-    statusEl.textContent = '✗ Número inválido';
-    return;
-  }
-  btn.disabled = true;
-  statusEl.style.color = '#818cf8';
-  statusEl.textContent = '⏳ Enviando...';
-  try {
-    await sendMessage(phone, buildMessage('Ricardo'));
-    statusEl.style.color = 'var(--green)';
-    statusEl.textContent = '✓ Mensagem enviada com sucesso!';
-    addLog(`Teste enviado para ${phone}`, 'ok');
-  } catch(e) {
-    statusEl.style.color = 'var(--red)';
-    statusEl.textContent = `✗ Erro: ${e.message}`;
-    addLog(`Erro no teste: ${e.message}`, 'err');
-  }
-  btn.disabled = false;
-}
+function updatePreview(){document.getElementById('msgPreview').textContent=document.getElementById('msgEditor').value.replace(/\{nome\}/g,'Ricardo');}
+function saveMessage(){config.message=document.getElementById('msgEditor').value;saveConfig();showToast('Mensagem salva!','ok');}
+function resetMessage(){config.message='Olá, {nome}! 🙏\n\nVocê está convidado(a) para a *Conferência do Ensino 2026* da Igreja Recomeçar!\n\n📖 *"Conferência do Ensino"*\n📅 *23 e 24 de Maio*\n📍 *Igreja Recomeçar*\n🎟️ *Entrada Franca*\n\nSerá um tempo especial de ensinamento com:\n✦ Pr Janderson Moura\n✦ Pra Rayssa Moura\n✦ Pra Raquel Jardim\n✦ Pr Herênio Ramiro\n✦ Pra Mabel Valadão\n✦ Pr Matheus Duque\n\nVenha e traga alguém! Te esperamos! 🔥';document.getElementById('msgEditor').value=config.message;saveConfig();updatePreview();showToast('Mensagem restaurada.','ok');}
 
-initLeads();
+function loadConfigFields(){document.getElementById('cfgTitle').value=config.title||'';document.getElementById('cfgSubtitle').value=config.subtitle||'';document.getElementById('cfgInstance').value=config.instance||'';document.getElementById('cfgToken').value=config.token||'';document.getElementById('cfgClientToken').value=config.clientToken||'';}
+function saveHeader(){config.title=document.getElementById('cfgTitle').value.trim()||'Disparo WA';config.subtitle=document.getElementById('cfgSubtitle').value.trim();saveConfig();applyHeader();showToast('Cabeçalho atualizado!','ok');}
+function saveCredentials(){config.instance=document.getElementById('cfgInstance').value.trim();config.token=document.getElementById('cfgToken').value.trim();config.clientToken=document.getElementById('cfgClientToken').value.trim();saveConfig();showToast('Credenciais salvas!','ok');}
+function resetAllData(){if(!confirm('Resetar TODOS os dados?'))return;localStorage.removeItem('disparo_config');localStorage.removeItem('disparo_leads');location.reload();}
 
-// Registrar Service Worker (PWA)
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(() => console.log('SW registrado'))
-      .catch(e => console.log('SW erro:', e));
-  });
-}
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+init();
 </script>
 </body>
 </html>
