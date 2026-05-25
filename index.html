@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title id="pageTitle">Disparo WhatsApp</title>h
+<title id="pageTitle">Disparo WhatsApp</title>
 <meta name="description" content="Disparo de mensagens WhatsApp via Z-API">
 <meta name="theme-color" content="#6366f1">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">h
+<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Disparo WA">
 <link rel="manifest" href="manifest.json">
@@ -199,11 +199,35 @@ tr:hover td{background:rgba(99,102,241,0.04);}
   </div>
 
   <div class="controls">
-    <button class="btn btn-primary" id="btnStart" onclick="startDisparo()">▶ Iniciar Disparo</button>
+    <button class="btn btn-primary" id="btnStart" onclick="startDisparo()">▶ Iniciar</button>
     <button class="btn btn-ghost" id="btnPause" onclick="pauseDisparo()" disabled>⏸ Pausar</button>
+    <button class="btn btn-danger" id="btnStop" onclick="stopDisparo()" disabled>⏹ Parar</button>
     <button class="btn btn-ghost" onclick="resetAll()">↺ Resetar</button>
     <button class="btn btn-success" onclick="exportLog()">↓ Log</button>
-    <div class="delay-wrap">Delay: <input type="number" id="delayInput" value="15" min="8" max="60"> seg</div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title"><span class="card-dot" style="background:var(--yellow)"></span>Proteção anti-bloqueio</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+      <div class="field-group" style="margin:0">
+        <label class="field-label">Delay mínimo (seg)</label>
+        <input type="number" id="delayMin" value="8" min="5" max="60">
+        <div class="field-hint">Mínimo entre mensagens</div>
+      </div>
+      <div class="field-group" style="margin:0">
+        <label class="field-label">Delay máximo (seg)</label>
+        <input type="number" id="delayMax" value="20" min="10" max="120">
+        <div class="field-hint">Máximo — variação aleatória</div>
+      </div>
+      <div class="field-group" style="margin:0">
+        <label class="field-label">Limite por sessão</label>
+        <input type="number" id="limitPerSession" value="50" min="10" max="200">
+        <div class="field-hint">Máx. mensagens por dia</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;font-size:11px;color:var(--muted)">
+      ⚠️ WhatsApp detecta automação por velocidade, volume e repetição. Delay aleatório e limite diário reduzem risco de bloqueio.
+    </div>
   </div>
 
   <div class="table-wrap">
@@ -458,24 +482,93 @@ async function sendTest(){
 async function startDisparo(){
   if(running&&!paused)return;
   running=true;paused=false;
-  document.getElementById('btnStart').disabled=true;document.getElementById('btnPause').disabled=false;
-  const delay=parseInt(document.getElementById('delayInput').value)*1000||4000;
-  const pending=leads.filter(l=>l.status==='pending');
-  addLog(`Iniciando disparo → ${pending.length} leads`,'info');
-  for(let i=0;i<pending.length;i++){
-    if(!running)break;while(paused)await new Promise(r=>setTimeout(r,500));
-    const lead=pending[i];updateRowStatus(lead.id,'sending');addLog(`→ ${lead.name} (${lead.phone})`);
-    try{await sendMessage(lead.phone,buildMessage(lead.name));updateRowStatus(lead.id,'sent');addLog(`✓ ${lead.name}`,'ok');}
-    catch(e){updateRowStatus(lead.id,'error',e.message);addLog(`✗ ${lead.name}: ${e.message}`,'err');}
-    saveLeads();
-    if(i<pending.length-1)await new Promise(r=>setTimeout(r,delay));
+  document.getElementById('btnStart').disabled=true;
+  document.getElementById('btnPause').disabled=false;
+  document.getElementById('btnStop').disabled=false;
+
+  const delayMin=(parseInt(document.getElementById('delayMin').value)||8)*1000;
+  const delayMax=(parseInt(document.getElementById('delayMax').value)||20)*1000;
+  const limit=parseInt(document.getElementById('limitPerSession').value)||50;
+
+  const pending=leads.filter(l=>l.status==='pending').slice(0,limit);
+  if(leads.filter(l=>l.status==='pending').length>limit){
+    showToast(`⚠️ Limitado a ${limit} mensagens nesta sessão por segurança.`,'');
   }
+
+  addLog(`Iniciando disparo → ${pending.length} leads · delay ${delayMin/1000}-${delayMax/1000}s`,'info');
+
+  for(let i=0;i<pending.length;i++){
+    if(!running)break;
+    while(paused)await new Promise(r=>setTimeout(r,500));
+    if(!running)break;
+
+    // Pausa longa a cada 20 mensagens
+    if(i>0&&i%20===0){
+      const pausaLonga=5*60*1000; // 5 minutos
+      addLog(`⏸ Pausa de segurança (5 min) após ${i} envios...`,'info');
+      showToast(`Pausa de 5 min após ${i} envios — proteção anti-bloqueio`,'');
+      for(let t=0;t<pausaLonga/1000;t++){
+        if(!running)break;
+        await new Promise(r=>setTimeout(r,1000));
+      }
+      if(!running)break;
+      addLog('▶ Retomando disparo...','info');
+    }
+
+    const lead=pending[i];
+    updateRowStatus(lead.id,'sending');
+    addLog(`→ ${lead.name} (${lead.phone})`);
+
+    try{
+      await sendMessage(lead.phone,buildMessage(lead.name));
+      updateRowStatus(lead.id,'sent');
+      addLog(`✓ ${lead.name}`,'ok');
+    }catch(e){
+      updateRowStatus(lead.id,'error',e.message);
+      addLog(`✗ ${lead.name}: ${e.message}`,'err');
+    }
+    saveLeads();
+
+    // Delay aleatório entre mensagens
+    if(i<pending.length-1&&running){
+      const delay=Math.floor(Math.random()*(delayMax-delayMin)+delayMin);
+      addLog(`⏱ Aguardando ${(delay/1000).toFixed(1)}s...`);
+      await new Promise(r=>setTimeout(r,delay));
+    }
+  }
+
+  const motivo=running?'concluído':'interrompido';
   running=false;paused=false;
-  document.getElementById('btnStart').disabled=false;document.getElementById('btnPause').disabled=true;
-  addLog('Disparo concluído!','info');showToast('Disparo concluído!','ok');
+  document.getElementById('btnStart').disabled=false;
+  document.getElementById('btnPause').disabled=true;
+  document.getElementById('btnStop').disabled=true;
+  document.getElementById('btnPause').textContent='⏸ Pausar';
+  addLog(`Disparo ${motivo}!`,'info');
+  showToast(`Disparo ${motivo}!`,'ok');
 }
 
-function pauseDisparo(){paused=!paused;document.getElementById('btnPause').textContent=paused?'▶ Retomar':'⏸ Pausar';addLog(paused?'Pausado.':'Retomado.','info');}
+function pauseDisparo(){
+  if(!running)return;
+  paused=!paused;
+  document.getElementById('btnPause').textContent=paused?'▶ Retomar':'⏸ Pausar';
+  addLog(paused?'⏸ Pausado — aguardando retomada.':'▶ Retomado.','info');
+  showToast(paused?'Disparo pausado.':'Disparo retomado.');
+}
+
+function stopDisparo(){
+  if(!running)return;
+  if(!confirm('Parar o disparo agora? Os leads já enviados ficam marcados. Os pendentes voltam para pendente.'))return;
+  running=false;paused=false;
+  // Reverter 'sending' para 'pending'
+  leads.forEach(l=>{if(l.status==='sending'){l.status='pending';l.errorMsg='';}});
+  saveLeads();renderTable();updateStats();
+  document.getElementById('btnStart').disabled=false;
+  document.getElementById('btnPause').disabled=true;
+  document.getElementById('btnStop').disabled=true;
+  document.getElementById('btnPause').textContent='⏸ Pausar';
+  addLog('⏹ Disparo interrompido pelo usuário.','err');
+  showToast('Disparo parado.','err');
+}
 
 function resetAll(){
   if(running){running=false;paused=false;}
