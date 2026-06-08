@@ -292,7 +292,8 @@ tr:hover td{background:rgba(99,102,241,0.04);}
       <button class="pill" onclick="sortLeads('newest',this)" id="sortNew" style="border:none;background:transparent">+ Recente</button>
       <button class="pill" onclick="sortLeads('oldest',this)" id="sortOld" style="border:none;background:transparent">+ Antigo</button>
     </div>
-    <button class="btn btn-success" onclick="syncNotion()" id="btnNotion" style="margin-left:auto">🔄 Notion</button>
+    <button class="btn btn-primary" onclick="importNovosMembros()" style="margin-left:auto">☕ Importar Novos Membros</button>
+    <button class="btn btn-success" onclick="syncNotion()" id="btnNotion">🔄 Notion</button>
     <button class="btn btn-ghost" onclick="exportLeads()">↓ CSV</button>
     <button class="btn btn-danger" onclick="clearAllLeads()">🗑</button>
   </div>
@@ -840,6 +841,28 @@ function loadConfigFields(){document.getElementById('cfgTitle').value=config.tit
 function saveHeader(){config.title=document.getElementById('cfgTitle').value.trim()||'Disparo WA';config.subtitle=document.getElementById('cfgSubtitle').value.trim();saveConfig();applyHeader();showToast('Cabeçalho atualizado!','ok');}
 function saveCredentials(){config.instance=document.getElementById('cfgInstance').value.trim();config.token=document.getElementById('cfgToken').value.trim();config.clientToken=document.getElementById('cfgClientToken').value.trim();saveConfig();showToast('Credenciais salvas!','ok');}
 function resetAllData(){if(!confirm('Resetar TODOS os dados?'))return;localStorage.removeItem('disparo_config');localStorage.removeItem('disparo_leads');location.reload();}
+
+const NOVOS_MEMBROS=[["Alline terra Murad","5521964797049","allinegonzo@gmail.com"],["Matheus Viana Senra","5521996713272","matheusviana.senra@gmail.com"],["JONIO ROGERIO ARAGAO CAMPOS DE CARVALHO","5521995849085","joniocarvalho@gmail.com"],["Flávia Bessa de Carvalho","5521998570399","flaviabessac@gmail.com"],["Vera Lúcia Viana de Freitas Senra","5521996102942","verasenra100@yahoo.com.br"],["Juliana Almeida Viana","5521976086627","vianajuliana90@gmail.com"],["Cátia Regina Bessa Teixeira Pinto","5521971880914","catiabessa2020@gmail.com"],["Sarah Bessa Pinto","5521971880914","catiabessa2020@gmail.com"],["Anna Beatriz Araujo Bessa","5521972373372","annabeatrizaraujo384@gmail.com"],["José Eduardo Teixeira Pinto","5521972821963","joseeduardoteixeira01@gmail.com"],["Ana Clara Fidelis de Lima","5521920069522","aclara.fidelis@icloud.com"],["João Paulo Bessa Pinto","5521996925602","joaopaulobessa01@gmail.com"],["Vivian Vianna Torquato","5521985982677","vivitorquato19@gmail.com"],["Carlos Eduardo Bessa Pinto","5521997511196","dudubessa32@gmail.com"],["Élia Daltro do Ó","5521988900905","eliadaltrodoo@gmail.com"],["Mariana Anastácia Daltro do Ó Pereira","5521967743200","mari.daltro@hotmail.com"],["Guilherme Augusto Daltro dos Santos","5521985270114","mari.daltro@hotmail.com"],["Nicolly Cristina Gonçalves Costa","5521980007709","nicollycgc@gmail.com"],["Leone de Sousa Silva","5521971234762","leeo86406776@gmail.com"],["Tamiris Silva Pereira","5521994308120","tamirispereiran@gmail.com"],["Rafaela Luciana silveira santos leite","5521990799493","rafaelasilveiraleite31@gmail.com"],["Vinícius Rafael Lima Vilaça","5569992058090","vilaca.socialmedia@gmail.com"],["Maria da Glória Cardoso","5521997587290","gloriacardoso973@yahoo.com.br"],["Natacha Fernandes","5521964383488","natachaelff@gmail.com"],["Pablo Lourenço Torquato","5521997579684","paltovendas@gmail.com"],["Karoline Farias","5514997160396","karolfarias0728@gmail.com"],["Maria Leidiane Pereira Lima","5521998635292","leidylima.ljpv@gmail.com"],["Patrícia de Oliveira Araujo","5521992178256","patriciaticinhaaraujo549@gmail.com"],["Luciane Ferreira Tenorio","5521981963076","ane.tenorio@yahoo.com"],["José Tiago da Silva","5521982273565","josetiago.rj@gmail.com"],["Hilton cesar de Souza","5521981280601","Hiltoncesar452016@gmail.com"],["Rebecca Figueiredo Staut Fessore","5521972233065","rebeccamullerofc@gmail.com"],["Ísis Dayana de Sousa Rocha Bonfim","5521992959621","isisdaiana4@gmail.com"],["Teodoro Bonfim Santos","5521980104357","isisdaiana4@gmail.com"],["Cosme Patrício","5521982401577","cosmepatricioo@gmail.com"],["Berenice Barbosa Ribeiro Araújo de Andrade","5521969044335","andradeberenice@gmail.com"],["Thiago Valente","5521965144338","thfernandes87@gmail.com"],["Lucas de faria azevedo","5521994815775","lucasdefariaazevedo71@gmail.com"],["Lisia Silva de faria","5521970330101","flisia677@gmail.com"],["Sérgio Eduardo de Carvalho Batista","5521981198248","sossergioeduardo@gmail.com"],["Fabiane Lopes Cordeiro","5521995759055","fabianelopesrocha@gmail.com"],["Daniele Barreto Lima","5521984831665","danielebarreto88@gmail.com"],["Juliana Silva Peixoto","5521983014222","julianapeixotoadv90@gmail.com"]];
+
+function importNovosMembros(){
+  let added=0,dupes=0;
+  const existingPhones=new Set(leads.map(l=>l.phone).filter(Boolean));
+  const existingNames=new Set(leads.map(l=>l.name.toLowerCase()));
+  NOVOS_MEMBROS.forEach(r=>{
+    const name=r[0].trim(),phone=r[1],email=r[2];
+    if(!name)return;
+    if(existingNames.has(name.toLowerCase())){dupes++;return;}
+    if(phone&&existingPhones.has(phone)){dupes++;return;}
+    const newId=leads.length>0?Math.max(...leads.map(l=>l.id))+1:0;
+    leads.push({id:newId,name,phone,rawPhone:phone,email,age:'',createdAt:new Date().toISOString(),status:phone?'pending':'error',errorMsg:phone?'':'Sem telefone'});
+    if(phone)existingPhones.add(phone);
+    existingNames.add(name.toLowerCase());
+    added++;
+  });
+  saveLeads();renderLeadsPage();renderTable();updateStats();
+  showToast(`✓ ${added} Novos Membros importados · ${dupes} já existiam`,'ok');
+  addLog(`Novos Membros: ${added} importados, ${dupes} já existiam`,'ok');
+}
 
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 init();
